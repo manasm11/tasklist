@@ -3,8 +3,6 @@ package taskstore
 import (
 	"log"
 	"testing"
-
-	"github.com/manasm11/tasklist/internal/taskstore"
 )
 
 func TestNew(t *testing.T) {
@@ -19,7 +17,7 @@ func TestCreateTask(t *testing.T) {
 
 	var ts *TaskStore = New()
 
-	var id uint64 = ts.CreateTask("Task 1")
+	var id uint64 = ts.CreateTask("Task 1", nil)
 
 	task, err := ts.GetTask(id)
 	if err != nil {
@@ -38,7 +36,7 @@ func TestCreateTask(t *testing.T) {
 func TestGetTask(t *testing.T) {
 	t.Run("add and get 1 task", func(t *testing.T) {
 		var ts *TaskStore = New()
-		id := ts.CreateTask("Task 1")
+		id := ts.CreateTask("Task 1", nil)
 
 		task, err := ts.GetTask(id)
 
@@ -53,8 +51,8 @@ func TestGetTask(t *testing.T) {
 
 	t.Run("add and get 2 tasks", func(t *testing.T) {
 		var ts *TaskStore = New()
-		id1 := ts.CreateTask("Task 1")
-		id2 := ts.CreateTask("Task 2")
+		id1 := ts.CreateTask("Task 1", nil)
+		id2 := ts.CreateTask("Task 2", nil)
 
 		task1, err := ts.GetTask(id1)
 
@@ -88,7 +86,7 @@ func TestGetTask(t *testing.T) {
 
 func TestGetAllTask(t *testing.T) {
 	var ts *TaskStore = New()
-	ts.CreateTask("Task 1")
+	ts.CreateTask("Task 1", nil)
 
 	var tasks []Task = ts.GetAllTask()
 
@@ -106,13 +104,10 @@ func TestGetAllTask(t *testing.T) {
 
 func TestGetTasksByTag(t *testing.T) {
 	t.Run("create and access 1 task with tag", func(t *testing.T) {
-		ts := taskstore.New()
+		ts := New()
 		id := ts.CreateTask("Task 1", []string{"tag1"})
 
-		tasks, err := ts.GetTasksByTag("tag1")
-		if err != nil {
-			t.Errorf("GetTasksByTag() returned error: %v", err)
-		}
+		tasks := ts.GetTasksByTag("tag1")
 
 		if tasks[0].Title != "Task 1" {
 			t.Errorf("incorrect task title: %v", tasks[0].Title)
@@ -120,6 +115,35 @@ func TestGetTasksByTag(t *testing.T) {
 
 		if tasks[0].Id != id {
 			t.Errorf("incorrect task id: %v", tasks[0].Id)
+		}
+	})
+
+	t.Run("create two tasks with different tags and access just one", func(t *testing.T) {
+		ts := New()
+		id1 := ts.CreateTask("Task 1", []string{"tag1"})
+		id2 := ts.CreateTask("Task 1", []string{"tag1", "tag2"})
+
+		tag1Tasks := ts.GetTasksByTag("tag1")
+		tag2Tasks := ts.GetTasksByTag("tag2")
+
+		if len(tag1Tasks) != 2 {
+			t.Errorf("GetTasksByTag() returned %v tasks", len(tag1Tasks))
+		}
+
+		if len(tag2Tasks) != 1 {
+			t.Errorf("GetTasksByTag() returned %v tasks", len(tag2Tasks))
+		}
+
+		if tag2Tasks[0].Id != id2 {
+			t.Errorf("incorrect task id: %v", tag2Tasks[0].Id)
+		}
+
+		if tag1Tasks[0].Id != id1 && tag1Tasks[1].Id != id1 {
+			t.Errorf("task id %d not in %v", id1, tag1Tasks)
+		}
+
+		if tag1Tasks[0].Id != id2 && tag1Tasks[1].Id != id2 {
+			t.Errorf("task id %d not in %v", id2, tag1Tasks)
 		}
 	})
 }

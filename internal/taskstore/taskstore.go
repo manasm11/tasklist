@@ -18,18 +18,23 @@ type Task struct {
 var idCounter uint64 = 0
 
 type TaskStore struct {
-	tasks map[uint64]Task
+	tasks     map[uint64]Task
+	tagsTasks map[string][]uint64
 }
 
 func New() *TaskStore {
 	tasks := make(map[uint64]Task)
-	return &TaskStore{tasks}
+	tagsTasks := make(map[string][]uint64)
+	return &TaskStore{tasks, tagsTasks}
 }
 
-func (ts *TaskStore) CreateTask(title string) uint64 {
+func (ts *TaskStore) CreateTask(title string, tags []string) uint64 {
 	idCounter++
 	task := Task{Id: idCounter, Title: title}
 	ts.tasks[idCounter] = task
+	for _, tag := range tags {
+		ts.tagsTasks[tag] = append(ts.tagsTasks[tag], idCounter)
+	}
 	return task.Id
 }
 
@@ -39,6 +44,14 @@ func (ts *TaskStore) GetTask(id uint64) (Task, error) {
 		return Task{}, TaskNotFoundError
 	}
 	return task, nil
+}
+
+func (ts *TaskStore) GetTasksByTag(tags string) (tasks []Task) {
+	for _, id := range ts.tagsTasks[tags] {
+		task := ts.tasks[id]
+		tasks = append(tasks, task)
+	}
+	return tasks
 }
 
 func (ts *TaskStore) GetAllTask() []Task {
