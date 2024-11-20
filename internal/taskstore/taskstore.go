@@ -76,6 +76,23 @@ func (ts *TaskStore) GetTasksBytDueDate(due time.Time) []Task {
 	return nil
 }
 
+func (ts *TaskStore) DeleteTask(id uint64) error {
+	_, ok := ts.tasks[id]
+	if !ok {
+		return TaskNotFoundError
+	}
+	delete(ts.tasks, id)
+	//for tag, ids := range ts.tagsTasks {
+	//for i, id := range ids {
+	//if id == id {
+	//ts.tagsTasks[tag] = append(ts.tagsTasks[tag][:i], ts.tagsTasks[tag][i+1:]...)
+	//break
+	//}
+	//}
+	//}
+	return nil
+}
+
 func isDateEqual(t1, t2 time.Time) bool {
 	return t1.Day() == t2.Day() && t1.Month() == t2.Month() && t1.Year() == t2.Year()
 }

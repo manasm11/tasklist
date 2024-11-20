@@ -147,6 +147,45 @@ func TestGetTasksByDueDate(t *testing.T) {
 	})
 }
 
+func TestDeleteTask(t *testing.T) {
+	t.Run("delete task that does not exist", func(t *testing.T) {
+		ts := New()
+		err := ts.DeleteTask(1)
+		if err != TaskNotFoundError {
+			t.Errorf("DeleteTask() returned wrong error: %v", err)
+		}
+	})
+
+	t.Run("delete a task that exists", func(t *testing.T) {
+		ts, id := createTaskStoreAndTaskWithoutTagsOrDue("Task 1")
+
+		err := ts.DeleteTask(id)
+
+		if err != nil {
+			t.Errorf("DeleteTask() returned error: %v", err)
+		}
+
+		assertLen(t, ts.GetAllTask(), 0)
+	})
+
+	t.Run("delete task from many tasks", func(t *testing.T) {
+		ts, id1 := createTaskStoreAndTaskWithoutTagsOrDue("Task 1")
+		_ = ts.CreateTask("Task 2", nil, time.Time{})
+
+		err := ts.DeleteTask(id1)
+
+		assertEqual(t, err, nil)
+		assertLen(t, ts.GetAllTask(), 1)
+	})
+}
+
+func assertEqual[T comparable](t testing.TB, got, want T) {
+	t.Helper()
+	if got != want {
+		t.Errorf("got %v want %v", got, want)
+	}
+}
+
 func assertLen(t testing.TB, slice []Task, expectedLen int) {
 	t.Helper()
 	if len(slice) != expectedLen {
