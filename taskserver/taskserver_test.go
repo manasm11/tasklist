@@ -50,14 +50,43 @@ func Test_task(t *testing.T) {
 		assertEqual(t, strings.Trim(string(bs), "\n"), "1")
 		assertEqual(t, resp.StatusCode, http.StatusCreated)
 
-		resp = reqWithoutData(t, h, "GET", "/task/")
+		resp2 := reqWithoutData(t, h, "GET", "/task/")
+		assertEqual(t, resp2.Header.Get("Content-Type"), "application/json")
 
 		tasks := []taskstore.Task{}
-		json.NewDecoder(resp.Body).Decode(&tasks)
+		json.NewDecoder(resp2.Body).Decode(&tasks)
 
 		assertEqual(t, len(tasks), 1)
 		assertEqual(t, tasks[0].Title, "Task 1")
 	})
+
+	t.Run("delete at deletes all tasks", func(t *testing.T) {
+		h := httptest.NewServer(NewTaskServer())
+		defer h.Close()
+
+		task1 := map[string]string{"title": "Task 1"}
+		task2 := map[string]string{"title": "Task 2"}
+		reqWithJsonData(t, h, "POST", "/task/", task1)
+		reqWithJsonData(t, h, "POST", "/task/", task2)
+
+		tasks := getAllTasks(t, h)
+		assertEqual(t, len(tasks), 2)
+
+		resp := reqWithoutData(t, h, "DELETE", "/task/")
+		assertEqual(t, resp.StatusCode, http.StatusNoContent)
+
+		tasks2 := getAllTasks(t, h)
+		assertEqual(t, len(tasks2), 0)
+	})
+}
+
+func getAllTasks(t testing.TB, h *httptest.Server) []taskstore.Task {
+	t.Helper()
+	resp := reqWithoutData(t, h, "GET", "/task/")
+	tasks := []taskstore.Task{}
+	err := json.NewDecoder(resp.Body).Decode(&tasks)
+	assertEqual(t, err, nil)
+	return tasks
 }
 
 func assertEqual(t testing.TB, actual, expected interface{}) {
