@@ -103,6 +103,17 @@ func TestGetAllTask(t *testing.T) {
 }
 
 func TestGetTasksByTag(t *testing.T) {
+	t.Run("create and access 1 task without tag", func(t *testing.T) {
+		ts := New()
+		_ = ts.CreateTask("Task 1", nil)
+
+		tasks := ts.GetTasksByTag("tag1")
+
+		if len(tasks) != 0 {
+			t.Errorf("GetTasksByTag() returned %v tasks", len(tasks))
+		}
+	})
+
 	t.Run("create and access 1 task with tag", func(t *testing.T) {
 		ts := New()
 		id := ts.CreateTask("Task 1", []string{"tag1"})
