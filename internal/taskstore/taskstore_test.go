@@ -1,7 +1,6 @@
 package taskstore
 
 import (
-	"log"
 	"testing"
 	"time"
 )
@@ -91,9 +90,6 @@ func TestGetAllTask(t *testing.T) {
 
 	var tasks []Task = ts.GetAllTask()
 
-	log.Println("ts.tasks:", ts.tasks)
-	log.Println("tasks:", tasks)
-
 	if len(tasks) != 1 {
 		t.Errorf("GetAllTask() returned %v tasks", len(tasks))
 	}
@@ -106,7 +102,7 @@ func TestGetAllTask(t *testing.T) {
 func TestGetTasksByTag(t *testing.T) {
 	t.Run("create and access 1 task without tag", func(t *testing.T) {
 		ts := New()
-		_ = ts.CreateTask("Task 1", nil)
+		_ = ts.CreateTask("Task 1", nil, time.Time{})
 
 		tasks := ts.GetTasksByTag("tag1")
 
@@ -168,6 +164,60 @@ func TestGetTasksByDueDate(t *testing.T) {
 
 		if len(tasks) != 0 {
 			t.Errorf("GetTasksByDueDate() returned %v tasks", len(tasks))
+		}
+	})
+
+	t.Run("create and access 1 task with due date", func(t *testing.T) {
+		ts := New()
+		id := ts.CreateTask("Task 1", nil, time.Now())
+		time.Sleep(20 * time.Millisecond)
+		tasks := ts.GetTasksBytDueDate(time.Now())
+
+		if len(tasks) != 1 {
+			t.Errorf("GetTasksByDueDate() returned %v tasks", len(tasks))
+		}
+
+		if tasks[0].Title != "Task 1" {
+			t.Errorf("incorrect task title: %v", tasks[0].Title)
+		}
+
+		if tasks[0].Id != id {
+			t.Errorf("incorrect task id: %v", tasks[0].Id)
+		}
+	})
+
+	t.Run("create 2 tasks and access 1 task with due date", func(t *testing.T) {
+		ts := New()
+		today := time.Now()
+		tomorrow := today.AddDate(0, 0, 1)
+		id1 := ts.CreateTask("Task 1", nil, today)
+		id2 := ts.CreateTask("Task 2", nil, tomorrow)
+		tasks := ts.GetTasksBytDueDate(tomorrow)
+
+		if len(tasks) != 1 {
+			t.Errorf("GetTasksByDueDate() returned %v tasks", len(tasks))
+		}
+
+		if tasks[0].Title != "Task 2" {
+			t.Errorf("incorrect task title: %v", tasks[0].Title)
+		}
+
+		if tasks[0].Id != id2 {
+			t.Errorf("incorrect task id: %v", tasks[0].Id)
+		}
+
+		tasks = ts.GetTasksBytDueDate(today)
+
+		if len(tasks) != 1 {
+			t.Errorf("GetTasksByDueDate() returned %v tasks", len(tasks))
+		}
+
+		if tasks[0].Title != "Task 1" {
+			t.Errorf("incorrect task title: %v", tasks[0].Title)
+		}
+
+		if tasks[0].Id != id1 {
+			t.Errorf("incorrect task id: %v", tasks[0].Id)
 		}
 	})
 }

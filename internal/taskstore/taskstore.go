@@ -15,6 +15,7 @@ const (
 type Task struct {
 	Id    uint64
 	Title string
+	Due   time.Time
 }
 
 var idCounter uint64 = 0
@@ -32,7 +33,7 @@ func New() *TaskStore {
 
 func (ts *TaskStore) CreateTask(title string, tags []string, due time.Time) uint64 {
 	idCounter++
-	task := Task{Id: idCounter, Title: title}
+	task := Task{Id: idCounter, Title: title, Due: due}
 	ts.tasks[idCounter] = task
 	for _, tag := range tags {
 		ts.tagsTasks[tag] = append(ts.tagsTasks[tag], idCounter)
@@ -64,4 +65,17 @@ func (ts *TaskStore) GetAllTask() []Task {
 		i++
 	}
 	return tasks
+}
+
+func (ts *TaskStore) GetTasksBytDueDate(due time.Time) []Task {
+	for _, task := range ts.tasks {
+		if isDateEqual(due, task.Due) {
+			return []Task{task}
+		}
+	}
+	return nil
+}
+
+func isDateEqual(t1, t2 time.Time) bool {
+	return t1.Day() == t2.Day() && t1.Month() == t2.Month() && t1.Year() == t2.Year()
 }
