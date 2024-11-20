@@ -12,6 +12,13 @@ import (
 	"github.com/manasm11/tasklist/taskstore"
 )
 
+func Test_randompath(t *testing.T) {
+	h := httptest.NewServer(NewTaskServer())
+	defer h.Close()
+	resp := reqWithoutData(t, h, "GET", "/randompath/")
+	assertEqual(t, resp.StatusCode, http.StatusNotFound)
+}
+
 func Test_task(t *testing.T) {
 	t.Run("get at task without any data", func(t *testing.T) {
 		var ts http.Handler = NewTaskServer()
