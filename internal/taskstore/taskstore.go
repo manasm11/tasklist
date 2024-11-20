@@ -82,15 +82,20 @@ func (ts *TaskStore) DeleteTask(id uint64) error {
 		return TaskNotFoundError
 	}
 	delete(ts.tasks, id)
-	//for tag, ids := range ts.tagsTasks {
-	//for i, id := range ids {
-	//if id == id {
-	//ts.tagsTasks[tag] = append(ts.tagsTasks[tag][:i], ts.tagsTasks[tag][i+1:]...)
-	//break
-	//}
-	//}
-	//}
+	for tag, ids := range ts.tagsTasks {
+		for i, id := range ids {
+			if id == id {
+				ts.tagsTasks[tag] = append(ts.tagsTasks[tag][:i], ts.tagsTasks[tag][i+1:]...)
+				break
+			}
+		}
+	}
 	return nil
+}
+
+func (ts *TaskStore) DeleteAllTasks() {
+	ts.tasks = make(map[uint64]Task)
+	ts.tagsTasks = make(map[string][]uint64)
 }
 
 func isDateEqual(t1, t2 time.Time) bool {

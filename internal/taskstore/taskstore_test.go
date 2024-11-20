@@ -157,6 +157,25 @@ func TestDeleteTask(t *testing.T) {
 		assertEqual(t, err, nil)
 		assertLen(t, ts.GetAllTask(), 1)
 	})
+
+	t.Run("delete tasks should remove from tags as well", func(t *testing.T) {
+		ts, _ := createTaskStoreAndTaskWithoutTagsOrDue("Task 1")
+		id2 := ts.CreateTask("Task 2", []string{"tag1"}, time.Time{})
+
+		ts.DeleteTask(id2)
+
+		assertLen(t, ts.GetTasksByTag("tag1"), 0)
+	})
+}
+
+func TestDeleteAllTasks(t *testing.T) {
+	ts, _ := createTaskStoreAndTaskWithoutTagsOrDue("Task 1")
+	ts.CreateTask("Task 2", []string{"tag1"}, time.Time{})
+
+	ts.DeleteAllTasks()
+
+	assertLen(t, ts.GetAllTask(), 0)
+	assertLen(t, ts.GetTasksByTag("tag1"), 0)
 }
 
 func assertEqual(t testing.TB, got, want interface{}) {
