@@ -1,9 +1,17 @@
 package taskstore
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 )
+
+func TestTaskJsonEncoding(t *testing.T) {
+	var task = Task{Title: "Task 1"}
+	bs, err := json.Marshal(task)
+	assertEqual(t, err, nil)
+	assertEqual(t, string(bs), `{"id":0,"title":"Task 1","due":"0001-01-01T00:00:00Z"}`)
+}
 
 func TestNew(t *testing.T) {
 	var ts *TaskStore = New()

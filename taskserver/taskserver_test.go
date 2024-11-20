@@ -57,6 +57,7 @@ func Test_task(t *testing.T) {
 		assertEqual(t, strings.Trim(string(bs), "\n"), "1")
 		assertEqual(t, resp.StatusCode, http.StatusCreated)
 
+		getAllTasks(t, h)
 		resp2 := reqWithoutData(t, h, "GET", "/task/")
 		assertEqual(t, resp2.Header.Get("Content-Type"), "application/json")
 
@@ -85,6 +86,26 @@ func Test_task(t *testing.T) {
 		tasks2 := getAllTasks(t, h)
 		assertEqual(t, len(tasks2), 0)
 	})
+}
+
+func Test_task_id(t *testing.T) {
+	h := httptest.NewServer(NewTaskServer())
+	defer h.Close()
+	createTasks(t, h, "Task 1", "Task 2", "Task 3")
+	resp := reqWithoutData(t, h, "GET", "/task/1/")
+	assertEqual(t, resp.StatusCode, http.StatusOK)
+	task := taskstore.Task{}
+	err := json.NewDecoder(resp.Body).Decode(&task)
+	assertEqual(t, err, nil)
+	assertEqual(t, task.Title, "Task 1")
+}
+
+func createTasks(t testing.TB, h *httptest.Server, titles ...string) {
+	t.Helper()
+	for _, title := range titles {
+		task := map[string]interface{}{"title": title}
+		reqWithJsonData(t, h, "POST", "/task/", task)
+	}
 }
 
 func getAllTasks(t testing.TB, h *httptest.Server) []taskstore.Task {

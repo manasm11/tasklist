@@ -2,7 +2,9 @@ package taskserver
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/manasm11/tasklist/taskstore"
@@ -19,7 +21,28 @@ func NewTaskServer() http.Handler {
 	mux.HandleFunc("GET /task/", t.taskGet)
 	mux.HandleFunc("POST /task/", t.taskPost)
 	mux.HandleFunc("DELETE /task/", t.taskDelete)
+	mux.HandleFunc("GET /task/{id}/", t.taskIdGet)
 	return mux
+}
+
+func (t *taskServer) taskIdGet(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	idString := r.PathValue("id")
+	id, err := strconv.ParseInt(idString, 10, 64)
+	if err != nil {
+		http.Error(w, "id must be string", http.StatusBadRequest)
+		return
+	}
+	uid := uint64(id)
+	log.Println("uid:", uid)
+	task, err := t.ts.GetTask(uid)
+	log.Println("err:", err)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(task)
 }
 
 func (t *taskServer) taskGet(w http.ResponseWriter, r *http.Request) {

@@ -13,9 +13,9 @@ const (
 )
 
 type Task struct {
-	Id    uint64
-	Title string
-	Due   time.Time
+	Id    uint64    `json:"id"`
+	Title string    `json:"title"`
+	Due   time.Time `json:"due"`
 }
 
 var idCounter uint64 = 0
