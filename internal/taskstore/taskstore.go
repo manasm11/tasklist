@@ -1,5 +1,7 @@
 package taskstore
 
+import "time"
+
 type TaskStoreError string
 
 func (terr TaskStoreError) Error() string {
@@ -28,7 +30,7 @@ func New() *TaskStore {
 	return &TaskStore{tasks, tagsTasks}
 }
 
-func (ts *TaskStore) CreateTask(title string, tags []string) uint64 {
+func (ts *TaskStore) CreateTask(title string, tags []string, due time.Time) uint64 {
 	idCounter++
 	task := Task{Id: idCounter, Title: title}
 	ts.tasks[idCounter] = task

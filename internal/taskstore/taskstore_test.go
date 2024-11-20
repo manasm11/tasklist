@@ -3,6 +3,7 @@ package taskstore
 import (
 	"log"
 	"testing"
+	"time"
 )
 
 func TestNew(t *testing.T) {
@@ -17,7 +18,7 @@ func TestCreateTask(t *testing.T) {
 
 	var ts *TaskStore = New()
 
-	var id uint64 = ts.CreateTask("Task 1", nil)
+	var id uint64 = ts.CreateTask("Task 1", nil, time.Time{})
 
 	task, err := ts.GetTask(id)
 	if err != nil {
@@ -36,7 +37,7 @@ func TestCreateTask(t *testing.T) {
 func TestGetTask(t *testing.T) {
 	t.Run("add and get 1 task", func(t *testing.T) {
 		var ts *TaskStore = New()
-		id := ts.CreateTask("Task 1", nil)
+		id := ts.CreateTask("Task 1", nil, time.Time{})
 
 		task, err := ts.GetTask(id)
 
@@ -51,8 +52,8 @@ func TestGetTask(t *testing.T) {
 
 	t.Run("add and get 2 tasks", func(t *testing.T) {
 		var ts *TaskStore = New()
-		id1 := ts.CreateTask("Task 1", nil)
-		id2 := ts.CreateTask("Task 2", nil)
+		id1 := ts.CreateTask("Task 1", nil, time.Time{})
+		id2 := ts.CreateTask("Task 2", nil, time.Time{})
 
 		task1, err := ts.GetTask(id1)
 
@@ -86,7 +87,7 @@ func TestGetTask(t *testing.T) {
 
 func TestGetAllTask(t *testing.T) {
 	var ts *TaskStore = New()
-	ts.CreateTask("Task 1", nil)
+	ts.CreateTask("Task 1", nil, time.Time{})
 
 	var tasks []Task = ts.GetAllTask()
 
@@ -116,7 +117,7 @@ func TestGetTasksByTag(t *testing.T) {
 
 	t.Run("create and access 1 task with tag", func(t *testing.T) {
 		ts := New()
-		id := ts.CreateTask("Task 1", []string{"tag1"})
+		id := ts.CreateTask("Task 1", []string{"tag1"}, time.Time{})
 
 		tasks := ts.GetTasksByTag("tag1")
 
@@ -131,8 +132,8 @@ func TestGetTasksByTag(t *testing.T) {
 
 	t.Run("create two tasks with different tags and access just one", func(t *testing.T) {
 		ts := New()
-		id1 := ts.CreateTask("Task 1", []string{"tag1"})
-		id2 := ts.CreateTask("Task 1", []string{"tag1", "tag2"})
+		id1 := ts.CreateTask("Task 1", []string{"tag1"}, time.Time{})
+		id2 := ts.CreateTask("Task 1", []string{"tag1", "tag2"}, time.Time{})
 
 		tag1Tasks := ts.GetTasksByTag("tag1")
 		tag2Tasks := ts.GetTasksByTag("tag2")
@@ -155,6 +156,18 @@ func TestGetTasksByTag(t *testing.T) {
 
 		if tag1Tasks[0].Id != id2 && tag1Tasks[1].Id != id2 {
 			t.Errorf("task id %d not in %v", id2, tag1Tasks)
+		}
+	})
+}
+
+func TestGetTasksByDueDate(t *testing.T) {
+	t.Run("create and access 1 task without due date", func(t *testing.T) {
+		ts := New()
+		ts.CreateTask("Task 1", nil, time.Time{})
+		tasks := ts.GetTasksBytDueDate(time.Now())
+
+		if len(tasks) != 0 {
+			t.Errorf("GetTasksByDueDate() returned %v tasks", len(tasks))
 		}
 	})
 }
