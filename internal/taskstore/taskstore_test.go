@@ -161,10 +161,7 @@ func TestDeleteTask(t *testing.T) {
 
 		err := ts.DeleteTask(id)
 
-		if err != nil {
-			t.Errorf("DeleteTask() returned error: %v", err)
-		}
-
+		assertEqual(t, err, nil)
 		assertLen(t, ts.GetAllTask(), 0)
 	})
 
