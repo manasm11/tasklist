@@ -14,49 +14,34 @@ func TestNew(t *testing.T) {
 }
 
 func TestCreateTask(t *testing.T) {
-
 	var ts *TaskStore = New()
-
 	var id uint64 = ts.CreateTask("Task 1", nil, time.Time{})
-
 	task, err := ts.GetTask(id)
-	if err != nil {
-		t.Errorf("GetTask() returned error: %v", err)
-	}
 
+	assertEqual(t, err, nil)
 	assertTaskTitleId(t, task, "Task 1", id)
 }
 
 func TestGetTask(t *testing.T) {
 	t.Run("add and get 1 task", func(t *testing.T) {
 		ts, id := createTaskStoreAndTaskWithoutTagsOrDue("Task 1")
-
 		task, err := ts.GetTask(id)
 
-		if err != nil {
-			t.Errorf("GetTask() returned error: %v", err)
-		}
-
+		assertEqual(t, err, nil)
 		assertTaskTitleId(t, task, "Task 1", id)
 	})
 
 	t.Run("add and get 2 tasks", func(t *testing.T) {
 		ts, id1 := createTaskStoreAndTaskWithoutTagsOrDue("Task 1")
 		id2 := ts.CreateTask("Task 2", nil, time.Time{})
-
 		task1, err := ts.GetTask(id1)
 
-		if err != nil {
-			t.Errorf("GetTask() returned error: %v", err)
-		}
+		assertEqual(t, err, nil)
 		assertTaskTitleId(t, task1, "Task 1", id1)
 
 		task2, err := ts.GetTask(id2)
 
-		if err != nil {
-			t.Errorf("GetTask() returned error: %v", err)
-		}
-
+		assertEqual(t, err, nil)
 		assertTaskTitleId(t, task2, "Task 2", id2)
 	})
 }
@@ -151,9 +136,7 @@ func TestDeleteTask(t *testing.T) {
 	t.Run("delete task that does not exist", func(t *testing.T) {
 		ts := New()
 		err := ts.DeleteTask(1)
-		if err != TaskNotFoundError {
-			t.Errorf("DeleteTask() returned wrong error: %v", err)
-		}
+		assertEqual(t, err, TaskNotFoundError)
 	})
 
 	t.Run("delete a task that exists", func(t *testing.T) {
@@ -176,7 +159,7 @@ func TestDeleteTask(t *testing.T) {
 	})
 }
 
-func assertEqual[T comparable](t testing.TB, got, want T) {
+func assertEqual(t testing.TB, got, want interface{}) {
 	t.Helper()
 	if got != want {
 		t.Errorf("got %v want %v", got, want)
