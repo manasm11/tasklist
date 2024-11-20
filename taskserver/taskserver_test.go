@@ -3,8 +3,10 @@ package taskserver
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/manasm11/tasklist/taskstore"
@@ -43,11 +45,9 @@ func Test_task(t *testing.T) {
 		data := map[string]interface{}{"title": "Task 1"}
 		resp := reqWithJsonData(t, h, "POST", "/task/", data)
 
-		var respData map[string]uint64
-		json.NewDecoder(resp.Body).Decode(&respData)
-		_, ok := respData["id"]
-		assertEqual(t, ok, true)
-
+		bs, err := io.ReadAll(resp.Body)
+		assertEqual(t, err, nil)
+		assertEqual(t, strings.Trim(string(bs), "\n"), "1")
 		assertEqual(t, resp.StatusCode, http.StatusCreated)
 
 		resp = reqWithoutData(t, h, "GET", "/task/")

@@ -19,7 +19,8 @@ func NewTaskServer() http.Handler {
 			w.WriteHeader(http.StatusCreated)
 			var t taskstore.Task
 			json.NewDecoder(r.Body).Decode(&t)
-			ts.CreateTask(t.Title, nil, time.Time{})
+			id := ts.CreateTask(t.Title, nil, time.Time{})
+			json.NewEncoder(w).Encode(id)
 		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}
