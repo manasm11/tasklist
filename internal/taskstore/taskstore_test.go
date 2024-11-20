@@ -3,6 +3,8 @@ package taskstore
 import (
 	"log"
 	"testing"
+
+	"github.com/manasm11/tasklist/internal/taskstore"
 )
 
 func TestNew(t *testing.T) {
@@ -100,4 +102,24 @@ func TestGetAllTask(t *testing.T) {
 	if tasks[0].Title != "Task 1" {
 		t.Errorf("incorrect task title: %v", tasks[0].Title)
 	}
+}
+
+func TestGetTasksByTag(t *testing.T) {
+	t.Run("create and access 1 task with tag", func(t *testing.T) {
+		ts := taskstore.New()
+		id := ts.CreateTask("Task 1", []string{"tag1"})
+
+		tasks, err := ts.GetTasksByTag("tag1")
+		if err != nil {
+			t.Errorf("GetTasksByTag() returned error: %v", err)
+		}
+
+		if tasks[0].Title != "Task 1" {
+			t.Errorf("incorrect task title: %v", tasks[0].Title)
+		}
+
+		if tasks[0].Id != id {
+			t.Errorf("incorrect task id: %v", tasks[0].Id)
+		}
+	})
 }
