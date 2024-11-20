@@ -43,8 +43,10 @@ func (ts *TaskStore) GetTask(id uint64) (Task, error) {
 
 func (ts *TaskStore) GetAllTask() []Task {
 	tasks := make([]Task, len(ts.tasks))
+	i := 0
 	for _, task := range ts.tasks {
-		tasks = append(tasks, task)
+		tasks[i] = task
+		i++
 	}
 	return tasks
 }

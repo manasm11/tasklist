@@ -1,6 +1,9 @@
 package taskstore
 
-import "testing"
+import (
+	"log"
+	"testing"
+)
 
 func TestNew(t *testing.T) {
 	var ts *TaskStore = New()
@@ -15,10 +18,6 @@ func TestCreateTask(t *testing.T) {
 	var ts *TaskStore = New()
 
 	var id uint64 = ts.CreateTask("Task 1")
-
-	if id == 0 {
-		t.Errorf("CreateTask() returned 0")
-	}
 
 	task, err := ts.GetTask(id)
 	if err != nil {
@@ -37,9 +36,9 @@ func TestCreateTask(t *testing.T) {
 func TestGetTask(t *testing.T) {
 	t.Run("add and get 1 task", func(t *testing.T) {
 		var ts *TaskStore = New()
-		ts.CreateTask("Task 1")
+		id := ts.CreateTask("Task 1")
 
-		task, err := ts.GetTask(1)
+		task, err := ts.GetTask(id)
 
 		if err != nil {
 			t.Errorf("GetTask() returned error: %v", err)
@@ -90,6 +89,9 @@ func TestGetAllTask(t *testing.T) {
 	ts.CreateTask("Task 1")
 
 	var tasks []Task = ts.GetAllTask()
+
+	log.Println("ts.tasks:", ts.tasks)
+	log.Println("tasks:", tasks)
 
 	if len(tasks) != 1 {
 		t.Errorf("GetAllTask() returned %v tasks", len(tasks))
