@@ -24,19 +24,12 @@ func TestCreateTask(t *testing.T) {
 		t.Errorf("GetTask() returned error: %v", err)
 	}
 
-	if task.Id != id {
-		t.Errorf("incorrect task id: %v", task.Id)
-	}
-
-	if task.Title != "Task 1" {
-		t.Errorf("incorrect task title: %v", task.Title)
-	}
+	assertTaskTitleId(t, task, "Task 1", id)
 }
 
 func TestGetTask(t *testing.T) {
 	t.Run("add and get 1 task", func(t *testing.T) {
-		var ts *TaskStore = New()
-		id := ts.CreateTask("Task 1", nil, time.Time{})
+		ts, id := createTaskStoreAndTaskWithoutTagsOrDue("Task 1")
 
 		task, err := ts.GetTask(id)
 
@@ -44,14 +37,11 @@ func TestGetTask(t *testing.T) {
 			t.Errorf("GetTask() returned error: %v", err)
 		}
 
-		if task.Title != "Task 1" {
-			t.Errorf("incorrect task title: %v", task.Title)
-		}
+		assertTaskTitleId(t, task, "Task 1", id)
 	})
 
 	t.Run("add and get 2 tasks", func(t *testing.T) {
-		var ts *TaskStore = New()
-		id1 := ts.CreateTask("Task 1", nil, time.Time{})
+		ts, id1 := createTaskStoreAndTaskWithoutTagsOrDue("Task 1")
 		id2 := ts.CreateTask("Task 2", nil, time.Time{})
 
 		task1, err := ts.GetTask(id1)
@@ -59,14 +49,7 @@ func TestGetTask(t *testing.T) {
 		if err != nil {
 			t.Errorf("GetTask() returned error: %v", err)
 		}
-
-		if task1.Id != id1 {
-			t.Errorf("incorrect task id: %v", task1.Id)
-		}
-
-		if task1.Title != "Task 1" {
-			t.Errorf("incorrect task title: %v", task1.Title)
-		}
+		assertTaskTitleId(t, task1, "Task 1", id1)
 
 		task2, err := ts.GetTask(id2)
 
@@ -74,41 +57,26 @@ func TestGetTask(t *testing.T) {
 			t.Errorf("GetTask() returned error: %v", err)
 		}
 
-		if task2.Id != id2 {
-			t.Errorf("incorrect task id: %v", task2.Id)
-		}
-
-		if task2.Title != "Task 2" {
-			t.Errorf("incorrect task title: %v", task2.Title)
-		}
+		assertTaskTitleId(t, task2, "Task 2", id2)
 	})
 }
 
 func TestGetAllTask(t *testing.T) {
-	var ts *TaskStore = New()
-	ts.CreateTask("Task 1", nil, time.Time{})
+	ts, id := createTaskStoreAndTaskWithoutTagsOrDue("Task 1")
 
 	var tasks []Task = ts.GetAllTask()
 
-	if len(tasks) != 1 {
-		t.Errorf("GetAllTask() returned %v tasks", len(tasks))
-	}
-
-	if tasks[0].Title != "Task 1" {
-		t.Errorf("incorrect task title: %v", tasks[0].Title)
-	}
+	assertLen(t, tasks, 1)
+	assertTaskTitleId(t, tasks[0], "Task 1", id)
 }
 
 func TestGetTasksByTag(t *testing.T) {
 	t.Run("create and access 1 task without tag", func(t *testing.T) {
-		ts := New()
-		_ = ts.CreateTask("Task 1", nil, time.Time{})
+		ts, _ := createTaskStoreAndTaskWithoutTagsOrDue("Task 1")
 
 		tasks := ts.GetTasksByTag("tag1")
 
-		if len(tasks) != 0 {
-			t.Errorf("GetTasksByTag() returned %v tasks", len(tasks))
-		}
+		assertLen(t, tasks, 0)
 	})
 
 	t.Run("create and access 1 task with tag", func(t *testing.T) {
@@ -116,35 +84,22 @@ func TestGetTasksByTag(t *testing.T) {
 		id := ts.CreateTask("Task 1", []string{"tag1"}, time.Time{})
 
 		tasks := ts.GetTasksByTag("tag1")
-
-		if tasks[0].Title != "Task 1" {
-			t.Errorf("incorrect task title: %v", tasks[0].Title)
-		}
-
-		if tasks[0].Id != id {
-			t.Errorf("incorrect task id: %v", tasks[0].Id)
-		}
+		assertLen(t, tasks, 1)
+		assertTaskTitleId(t, tasks[0], "Task 1", id)
 	})
 
 	t.Run("create two tasks with different tags and access just one", func(t *testing.T) {
 		ts := New()
 		id1 := ts.CreateTask("Task 1", []string{"tag1"}, time.Time{})
-		id2 := ts.CreateTask("Task 1", []string{"tag1", "tag2"}, time.Time{})
+		id2 := ts.CreateTask("Task 2", []string{"tag1", "tag2"}, time.Time{})
 
 		tag1Tasks := ts.GetTasksByTag("tag1")
 		tag2Tasks := ts.GetTasksByTag("tag2")
 
-		if len(tag1Tasks) != 2 {
-			t.Errorf("GetTasksByTag() returned %v tasks", len(tag1Tasks))
-		}
+		assertLen(t, tag1Tasks, 2)
+		assertLen(t, tag2Tasks, 1)
 
-		if len(tag2Tasks) != 1 {
-			t.Errorf("GetTasksByTag() returned %v tasks", len(tag2Tasks))
-		}
-
-		if tag2Tasks[0].Id != id2 {
-			t.Errorf("incorrect task id: %v", tag2Tasks[0].Id)
-		}
+		assertTaskTitleId(t, tag2Tasks[0], "Task 2", id2)
 
 		if tag1Tasks[0].Id != id1 && tag1Tasks[1].Id != id1 {
 			t.Errorf("task id %d not in %v", id1, tag1Tasks)
@@ -158,13 +113,10 @@ func TestGetTasksByTag(t *testing.T) {
 
 func TestGetTasksByDueDate(t *testing.T) {
 	t.Run("create and access 1 task without due date", func(t *testing.T) {
-		ts := New()
-		ts.CreateTask("Task 1", nil, time.Time{})
+		ts, _ := createTaskStoreAndTaskWithoutTagsOrDue("Task 1")
 		tasks := ts.GetTasksBytDueDate(time.Now())
 
-		if len(tasks) != 0 {
-			t.Errorf("GetTasksByDueDate() returned %v tasks", len(tasks))
-		}
+		assertLen(t, tasks, 0)
 	})
 
 	t.Run("create and access 1 task with due date", func(t *testing.T) {
@@ -173,17 +125,8 @@ func TestGetTasksByDueDate(t *testing.T) {
 		time.Sleep(20 * time.Millisecond)
 		tasks := ts.GetTasksBytDueDate(time.Now())
 
-		if len(tasks) != 1 {
-			t.Errorf("GetTasksByDueDate() returned %v tasks", len(tasks))
-		}
-
-		if tasks[0].Title != "Task 1" {
-			t.Errorf("incorrect task title: %v", tasks[0].Title)
-		}
-
-		if tasks[0].Id != id {
-			t.Errorf("incorrect task id: %v", tasks[0].Id)
-		}
+		assertLen(t, tasks, 1)
+		assertTaskTitleId(t, tasks[0], "Task 1", id)
 	})
 
 	t.Run("create 2 tasks and access 1 task with due date", func(t *testing.T) {
@@ -194,30 +137,37 @@ func TestGetTasksByDueDate(t *testing.T) {
 		id2 := ts.CreateTask("Task 2", nil, tomorrow)
 		tasks := ts.GetTasksBytDueDate(tomorrow)
 
-		if len(tasks) != 1 {
-			t.Errorf("GetTasksByDueDate() returned %v tasks", len(tasks))
-		}
-
-		if tasks[0].Title != "Task 2" {
-			t.Errorf("incorrect task title: %v", tasks[0].Title)
-		}
-
-		if tasks[0].Id != id2 {
-			t.Errorf("incorrect task id: %v", tasks[0].Id)
-		}
+		assertLen(t, tasks, 1)
+		assertTaskTitleId(t, tasks[0], "Task 2", id2)
 
 		tasks = ts.GetTasksBytDueDate(today)
 
-		if len(tasks) != 1 {
-			t.Errorf("GetTasksByDueDate() returned %v tasks", len(tasks))
-		}
-
-		if tasks[0].Title != "Task 1" {
-			t.Errorf("incorrect task title: %v", tasks[0].Title)
-		}
-
-		if tasks[0].Id != id1 {
-			t.Errorf("incorrect task id: %v", tasks[0].Id)
-		}
+		assertLen(t, tasks, 1)
+		assertTaskTitleId(t, tasks[0], "Task 1", id1)
 	})
+}
+
+func assertLen(t testing.TB, slice []Task, expectedLen int) {
+	t.Helper()
+	if len(slice) != expectedLen {
+		t.Errorf("got length %d want %d", len(slice), expectedLen)
+	}
+}
+
+func assertTaskTitleId(t testing.TB, task Task, title string, id uint64) {
+	t.Helper()
+
+	if task.Id != id {
+		t.Errorf("got id %d want %d", task.Id, id)
+	}
+
+	if task.Title != title {
+		t.Errorf("got title %q want %q", task.Title, title)
+	}
+}
+
+func createTaskStoreAndTaskWithoutTagsOrDue(title string) (ts *TaskStore, id uint64) {
+	ts = New()
+	id = ts.CreateTask(title, nil, time.Time{})
+	return ts, id
 }
