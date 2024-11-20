@@ -15,23 +15,11 @@ type taskServer struct {
 func NewTaskServer() http.Handler {
 	ts := taskstore.New()
 	t := taskServer{ts: ts}
-	//mux := http.NewServeMux()
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/task/" {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-		switch r.Method {
-		case "GET":
-			t.taskGet(w, r)
-		case "POST":
-			t.taskPost(w, r)
-		case "DELETE":
-			t.taskDelete(w, r)
-		default:
-			w.WriteHeader(http.StatusMethodNotAllowed)
-		}
-	})
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /task/", t.taskGet)
+	mux.HandleFunc("POST /task/", t.taskPost)
+	mux.HandleFunc("DELETE /task/", t.taskDelete)
+	return mux
 }
 
 func (t *taskServer) taskGet(w http.ResponseWriter, r *http.Request) {
@@ -47,7 +35,6 @@ func (t *taskServer) taskPost(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&task)
 	id := t.ts.CreateTask(task.Title, nil, time.Time{})
 	json.NewEncoder(w).Encode(id)
-
 }
 
 func (t *taskServer) taskDelete(w http.ResponseWriter, r *http.Request) {
