@@ -43,6 +43,11 @@ func Test_task(t *testing.T) {
 		data := map[string]interface{}{"title": "Task 1"}
 		resp := reqWithJsonData(t, h, "POST", "/task/", data)
 
+		var respData map[string]uint64
+		json.NewDecoder(resp.Body).Decode(&respData)
+		_, ok := respData["id"]
+		assertEqual(t, ok, true)
+
 		assertEqual(t, resp.StatusCode, http.StatusCreated)
 
 		resp = reqWithoutData(t, h, "GET", "/task/")
