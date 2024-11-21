@@ -2,7 +2,6 @@ package taskserver
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -34,9 +33,7 @@ func (t *taskServer) taskIdGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid := uint64(id)
-	log.Println("uid:", uid)
 	task, err := t.ts.GetTask(uid)
-	log.Println("err:", err)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return

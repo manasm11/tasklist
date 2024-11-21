@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -91,21 +92,30 @@ func Test_task(t *testing.T) {
 func Test_task_id(t *testing.T) {
 	h := httptest.NewServer(NewTaskServer())
 	defer h.Close()
-	createTasks(t, h, "Task 1", "Task 2", "Task 3")
-	resp := reqWithoutData(t, h, "GET", "/task/1/")
-	assertEqual(t, resp.StatusCode, http.StatusOK)
-	task := taskstore.Task{}
-	err := json.NewDecoder(resp.Body).Decode(&task)
-	assertEqual(t, err, nil)
-	assertEqual(t, task.Title, "Task 1")
+	ids := createTasks(t, h, "Task 1", "Task 2", "Task 3")
+	assertEqual(t, len(getAllTasks(t, h)), 3)
+	for i, id := range ids {
+		resp := reqWithoutData(t, h, "GET", "/task/"+strconv.FormatUint(id, 10)+"/")
+		assertEqual(t, resp.StatusCode, http.StatusOK)
+		task := taskstore.Task{}
+		err := json.NewDecoder(resp.Body).Decode(&task)
+		assertEqual(t, err, nil)
+		assertEqual(t, task.Title, "Task "+strconv.Itoa(i+1))
+	}
 }
 
-func createTasks(t testing.TB, h *httptest.Server, titles ...string) {
+func createTasks(t testing.TB, h *httptest.Server, titles ...string) (ids []uint64) {
 	t.Helper()
 	for _, title := range titles {
-		task := map[string]interface{}{"title": title}
-		reqWithJsonData(t, h, "POST", "/task/", task)
+		task := map[string]string{"title": title}
+		resp := reqWithJsonData(t, h, "POST", "/task/", task)
+		bs, err := io.ReadAll(resp.Body)
+		assertEqual(t, err, nil)
+		id, err := strconv.ParseInt(strings.Trim(string(bs), "\n"), 10, 64)
+		assertEqual(t, err, nil)
+		ids = append(ids, uint64(id))
 	}
+	return ids
 }
 
 func getAllTasks(t testing.TB, h *httptest.Server) []taskstore.Task {
