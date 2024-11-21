@@ -21,7 +21,25 @@ func NewTaskServer() http.Handler {
 	mux.HandleFunc("POST /task/", t.taskPost)
 	mux.HandleFunc("DELETE /task/", t.taskDelete)
 	mux.HandleFunc("GET /task/{id}/", t.taskIdGet)
+	mux.HandleFunc("POST /task/{id}/", t.methodNotAllowed)
+	mux.HandleFunc("DELETE /task/{id}/", t.taskIdDelete)
 	return mux
+}
+
+func (t *taskServer) taskIdDelete(w http.ResponseWriter, r *http.Request) {
+	idString := r.PathValue("id")
+	id, err := strconv.ParseInt(idString, 10, 64)
+	if err != nil {
+		http.Error(w, "id must be string", http.StatusBadRequest)
+		return
+	}
+	uid := uint64(id)
+	err = t.ts.DeleteTask(uid)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (t *taskServer) taskIdGet(w http.ResponseWriter, r *http.Request) {
@@ -60,4 +78,8 @@ func (t *taskServer) taskPost(w http.ResponseWriter, r *http.Request) {
 func (t *taskServer) taskDelete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 	t.ts.DeleteAllTasks()
+}
+
+func (t *taskServer) methodNotAllowed(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 }

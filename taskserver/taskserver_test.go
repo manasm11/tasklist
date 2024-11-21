@@ -90,18 +90,51 @@ func Test_task(t *testing.T) {
 }
 
 func Test_task_id(t *testing.T) {
-	h := httptest.NewServer(NewTaskServer())
-	defer h.Close()
-	ids := createTasks(t, h, "Task 1", "Task 2", "Task 3")
-	assertEqual(t, len(getAllTasks(t, h)), 3)
-	for i, id := range ids {
-		resp := reqWithoutData(t, h, "GET", "/task/"+strconv.FormatUint(id, 10)+"/")
-		assertEqual(t, resp.StatusCode, http.StatusOK)
-		task := taskstore.Task{}
-		err := json.NewDecoder(resp.Body).Decode(&task)
-		assertEqual(t, err, nil)
-		assertEqual(t, task.Title, "Task "+strconv.Itoa(i+1))
-	}
+	t.Run("GET at task/id", func(t *testing.T) {
+		h := httptest.NewServer(NewTaskServer())
+		defer h.Close()
+		ids := createTasks(t, h, "Task 1", "Task 2", "Task 3")
+		assertEqual(t, len(getAllTasks(t, h)), 3)
+		for i, id := range ids {
+			resp := reqWithoutData(t, h, "GET", "/task/"+strconv.FormatUint(id, 10)+"/")
+			assertEqual(t, resp.StatusCode, http.StatusOK)
+			task := taskstore.Task{}
+			err := json.NewDecoder(resp.Body).Decode(&task)
+			assertEqual(t, err, nil)
+			assertEqual(t, task.Title, "Task "+strconv.Itoa(i+1))
+		}
+	})
+
+	t.Run("POST at task/id", func(t *testing.T) {
+		h := httptest.NewServer(NewTaskServer())
+		defer h.Close()
+		ids := createTasks(t, h, "Task 1")
+		resp := reqWithoutData(t, h, "POST", "/task/"+strconv.FormatUint(ids[0], 10)+"/")
+		assertEqual(t, resp.StatusCode, http.StatusMethodNotAllowed)
+	})
+
+	t.Run("PUT at task/id", func(t *testing.T) {
+		h := httptest.NewServer(NewTaskServer())
+		defer h.Close()
+		ids := createTasks(t, h, "Task 1")
+		resp := reqWithoutData(t, h, "PUT", "/task/"+strconv.FormatUint(ids[0], 10)+"/")
+		assertEqual(t, resp.StatusCode, http.StatusMethodNotAllowed)
+	})
+
+	t.Run("DELETE at task/id deletes", func(t *testing.T) {
+		h := httptest.NewServer(NewTaskServer())
+		defer h.Close()
+		ids := createTasks(t, h, "Task 1", "Task 2", "Task 3", "Task 4")
+		assertEqual(t, len(getAllTasks(t, h)), 4)
+		resp := reqWithoutData(t, h, "DELETE", "/task/"+strconv.FormatUint(ids[2], 10)+"/")
+		assertEqual(t, resp.StatusCode, http.StatusNoContent)
+
+		tasks := getAllTasks(t, h)
+		assertEqual(t, len(tasks), 3)
+		assertEqual(t, tasks[0].Title, "Task 1")
+		assertEqual(t, tasks[1].Title, "Task 2")
+		assertEqual(t, tasks[2].Title, "Task 4")
+	})
 }
 
 func createTasks(t testing.TB, h *httptest.Server, titles ...string) (ids []uint64) {
